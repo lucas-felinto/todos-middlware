@@ -10,19 +10,92 @@ app.use(cors());
 const users = [];
 
 function checksExistsUserAccount(request, response, next) {
-  // Complete aqui
+  try {
+    const { username } = request.headers;
+    
+    const user = users.find(user => user.username === username);
+
+    if (!user) {
+      return response.status(404).json({ error: 'User not found!' });
+    }
+
+    request.user = user;
+
+    next();
+  } catch (e) {
+    return response.status(500).json({ error: 'Internal Server Error'});
+  }
 }
 
 function checksCreateTodosUserAvailability(request, response, next) {
-  // Complete aqui
+  try {
+    const { user } = request;
+
+    if (!user.pro) {
+      if (user.todos.length >= 10) {
+        return response.status(403).json({ error: 'Cannot create more todos'});
+      }
+    }
+    
+    next();
+  } catch (e) {
+    return response.status(500).json({ error: 'Internal Server Error'});
+  }
 }
 
 function checksTodoExists(request, response, next) {
-  // Complete aqui
+  try {
+    const { username } = request.headers;
+    const todo_id = request.params.id;
+    let todo_id_exists = false;
+
+    const user = users.find(user => user.username === username);
+
+    if (!user) {
+      return response.status(404).json({ error: 'User not found!' });
+    }
+
+    const valid_uid = validate(todo_id);
+
+    if (!valid_uid) {
+      return response.status(400).json({ error: 'Invalid uuid'});
+    }
+
+    todo_id_exists = user.todos.find(todo => {
+      if (todo.id === todo_id) {
+        request.todo = todo;
+        request.user = user;
+
+        return true
+      }
+    });
+
+    if (!todo_id_exists) {
+      return response.status(404).json({ error: 'Invalid todo id'});
+    }
+
+    next();
+  } catch (e) {
+    return response.status(500).json({ error: 'Internal Server Error'});
+  }
 }
 
 function findUserById(request, response, next) {
-  // Complete aqui
+  try {
+    const { id } = request.params;
+    
+    const user = users.find(user => user.id === id);
+
+    if (!user) {
+      return response.status(404).json({ error: 'User not found!' });
+    }
+
+    request.user = user;
+
+    next();
+  } catch (e) {
+    return response.status(500).json({ error: 'Internal Server Error'});
+  }
 }
 
 app.post('/users', (request, response) => {
